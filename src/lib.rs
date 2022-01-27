@@ -1,8 +1,5 @@
 use std::fmt::{self, Display, Formatter};
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct Node<T>(pub T);
-
 pub type EdgeData = Vec<usize>;
 
 #[derive(Debug, PartialEq)]
@@ -13,7 +10,7 @@ pub struct EdgeGetError;
 
 #[derive(PartialEq, Clone)]
 pub struct Graph<T> {
-    nodes: Vec<Node<T>>,
+    nodes: Vec<T>,
     edges: Vec<EdgeData>,
 }
 
@@ -33,16 +30,16 @@ impl<T> Graph<T> {
 
     pub fn add_node(&mut self, node: T) -> usize {
         let index = self.nodes.len();
-        self.nodes.push(Node(node));
+        self.nodes.push(node);
         self.edges.push(EdgeData::new());
         index
     }
 
-    pub fn get_node(&self, node_idx: usize) -> Option<&Node<T>> {
+    pub fn get_node(&self, node_idx: usize) -> Option<&T> {
         self.nodes.get(node_idx)
     }
 
-    pub fn nodes(&self) -> impl Iterator<Item = &Node<T>> {
+    pub fn nodes(&self) -> impl Iterator<Item = &T> {
         self.nodes.iter()
     }
 
@@ -89,7 +86,7 @@ impl<T> Graph<T> {
         Ok(result)
     }
 
-    pub fn remove_node(&mut self, idx: usize) -> Node<T> {
+    pub fn remove_node(&mut self, idx: usize) -> T {
         if idx >= self.nodes.len() {
             panic!(
                 "index index out of range: len is {} but index is {}",
@@ -109,7 +106,7 @@ impl<T> Graph<T> {
         self.nodes.remove(idx)
     }
 
-    pub fn pop(&mut self) -> Option<Node<T>> {
+    pub fn pop(&mut self) -> Option<T> {
         if self.nodes.is_empty() {
             return None;
         }
@@ -122,7 +119,7 @@ impl<T: Display> Display for Graph<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         for (node, targets) in self.nodes.iter().zip(self.edges.iter()) {
             for target in targets.iter() {
-                writeln!(f, "{} -> {}", node.0, self.nodes[*target].0)?;
+                writeln!(f, "{} -> {}", node, self.nodes[*target])?;
             }
         }
 
@@ -132,8 +129,6 @@ impl<T: Display> Display for Graph<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::Node;
-
     use super::Graph;
 
     fn get_test_graph_without_edges() -> Graph<i32> {
@@ -177,12 +172,12 @@ mod tests {
     fn node_removal() {
         let mut graph = get_test_graph_with_edges();
 
-        assert_eq!(graph.remove_node(1), Node(1));
-        assert_eq!(graph.remove_node(1), Node(12));
+        assert_eq!(graph.remove_node(1), 1);
+        assert_eq!(graph.remove_node(1), 12);
         assert!(std::panic::catch_unwind(|| graph.clone().remove_node(6)).is_err());
         assert_eq!(graph.to_string(), "5 -> 100\n");
-        assert_eq!(graph.pop(), Some(Node(100)));
-        assert_eq!(graph.nodes().collect::<Vec<_>>(), vec![&Node(5)]);
+        assert_eq!(graph.pop(), Some(100));
+        assert_eq!(graph.nodes().collect::<Vec<_>>(), vec![&5]);
         graph.pop();
         assert_eq!(graph.pop(), None);
     }
