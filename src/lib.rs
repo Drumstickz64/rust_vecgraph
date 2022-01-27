@@ -3,10 +3,10 @@ use std::fmt::{self, Display, Formatter};
 pub type EdgeData = Vec<usize>;
 
 #[derive(Debug, PartialEq)]
-pub struct EdgeAdditionError;
+pub struct EdgeAdditionError(pub String);
 
 #[derive(Debug, PartialEq)]
-pub struct EdgeGetError;
+pub struct EdgeGetError(pub String);
 
 #[derive(PartialEq, Clone)]
 pub struct Graph<T> {
@@ -44,24 +44,49 @@ impl<T> Graph<T> {
     }
 
     pub fn add_edge(&mut self, from: usize, to: usize) -> Result<(), EdgeAdditionError> {
-        if to >= self.nodes.len() || from >= self.nodes.len() {
-            return Err(EdgeAdditionError);
+        if to >= self.nodes.len() {
+            return Err(EdgeAdditionError(format!(
+                "parameter to out of range, to: {}, length: {}",
+                to,
+                self.edges.len()
+            )));
         }
+
+        if from >= self.nodes.len() {
+            return Err(EdgeAdditionError(format!(
+                "parameter from out of range, from: {}, length: {}",
+                from,
+                self.edges.len()
+            )));
+        }
+
+        if from == to {
+            return Err(EdgeAdditionError("Node cannot point to itself".to_string()));
+        }
+
         self.edges[from].push(to);
         Ok(())
     }
 
-    pub fn get_edges_from(&self, idx: usize) -> Result<Vec<usize>, EdgeGetError> {
+    pub fn get_edges_from(&self, idx: usize) -> Result<EdgeData, EdgeGetError> {
         if idx >= self.nodes.len() {
-            return Err(EdgeGetError);
+            return Err(EdgeGetError(format!(
+                "index is out of bounds: index: {}, length: {}",
+                idx,
+                self.edges.len()
+            )));
         }
 
         Ok(self.edges[idx].clone())
     }
 
-    pub fn get_edges_to(&self, idx: usize) -> Result<Vec<usize>, EdgeGetError> {
+    pub fn get_edges_to(&self, idx: usize) -> Result<EdgeData, EdgeGetError> {
         if idx >= self.nodes.len() {
-            return Err(EdgeGetError);
+            return Err(EdgeGetError(format!(
+                "index is out of bounds: index: {}, length: {}",
+                idx,
+                self.edges.len()
+            )));
         }
 
         let mut edges = Vec::new();
@@ -75,9 +100,13 @@ impl<T> Graph<T> {
         Ok(edges)
     }
 
-    pub fn get_edges(&self, idx: usize) -> Result<Vec<usize>, EdgeGetError> {
+    pub fn get_edges(&self, idx: usize) -> Result<EdgeData, EdgeGetError> {
         if idx >= self.nodes.len() {
-            return Err(EdgeGetError);
+            return Err(EdgeGetError(format!(
+                "index is out of bounds: index: {}, length: {}",
+                idx,
+                self.edges.len()
+            )));
         }
 
         let mut result = Vec::new();
@@ -89,9 +118,9 @@ impl<T> Graph<T> {
     pub fn remove_node(&mut self, idx: usize) -> T {
         if idx >= self.nodes.len() {
             panic!(
-                "index index out of range: len is {} but index is {}",
+                "index index out of range: index is {}, but len is {}",
+                idx,
                 self.nodes.len(),
-                idx
             );
         }
 
